@@ -25,15 +25,16 @@ def askQnA(payload):
     API_URL = "https://api-inference.huggingface.co/models/deepset/roberta-base-squad2"
     headers = {"Authorization": f"Bearer {HUGGINGFACEHUB_API_TOKEN}"}
     response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()['answer']
-output = askQnA({
+    return (response.json()['answer'])
+'''output = askQnA({
 	"inputs": {
     "question": "What is my name?",
 	"context": "My name is Clara and I live in Berkeley."
     }
 })
-
 print(output)
+'''
+
 
 # uses meta Llama ai to answer questions like a chatbot
 def ask_chatAI(message):
