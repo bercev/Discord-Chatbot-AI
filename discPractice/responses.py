@@ -16,14 +16,14 @@ def get_response(user_input: str=None, deleted: bool=False, allMessages: default
         
     if deleted:
         return lowered
-    if lowered =='':
-        return 'Well, ur silent one aren\'t ya!'
-    if 'hello' in lowered:
-        return 'Hello there!'
-    if 'how are you' in lowered:
-        return 'Good, thanks!'
-    if 'bye' in lowered:
-        return 'Bye!'
+    #if lowered =='':
+    #    return 'Well, ur silent one aren\'t ya!'
+    #if 'hello' in lowered:
+    #    return 'Hello there!'
+    #if 'how are you' in lowered:
+    #    return 'Good, thanks!'
+    #if 'bye' in lowered:
+    #    return 'Bye!'
     if 'roll dice' in lowered:
         return f'You rolled: {randint(1,6)}'
     if len(lowered) > 2 and '>>' in lowered[0:2] and '?' in lowered[2:]: # checks if syntax is correct to call the AI model
