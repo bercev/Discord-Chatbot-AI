@@ -6,6 +6,7 @@ from responses import get_response
 import certifi
 import asyncio
 from collections import defaultdict
+from discord.ext import commands
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
@@ -17,14 +18,13 @@ TOKEN: Final[str] = os.getenv('DISCORD_TOKEN')
 # Bot Setup
 intents: Intents = Intents.default()
 intents.message_content = True # NOQA
-client: Client = Client(intents=intents)
+client: Client = commands.Bot(command_prefix=[">>"], intents=intents)
 
 # deleted message holder
 recentlyDeleted = "No messages have been recently deleted"
 
 # holds all messages
 allMessages = defaultdict(set)
-
 
 # Flag to control message processing
 processing_messages = True
@@ -49,6 +49,7 @@ async def send_message(message: Message, user_message: str, deleted: bool=False)
         else:
             response: str = get_response(user_message)
         await message.author.send(response) if is_private else await message.channel.send(response)
+        await asyncio.sleep(5)
         
         ''' if a question is asked to the chatbot, sleep for 5 seconds to ensure the AI model isn't overloaded because of server requests 
         as it is hosted on the Hugging Face Inference API
@@ -116,6 +117,20 @@ async def on_read(message: Message) ->None:
 @client.event
 async def on_ready():
     print("BOT IS NOW LIVE!")
+    # Ensure the bot is ready before accessing the guild
+    guild = client.get_guild(1276709072535552000)
+    
+    if guild is None:
+        print("Could not find guild with ID 1276709072535552000")
+        return
+
+    channel = guild.get_channel(1276709073160634391)
+    
+    if channel is None:
+        print("Could not find channel with ID 1276709073160634391")
+        return
+    
+    await channel.send("BOT IS NOW LIVE!")
 
 
 # Main entry point
