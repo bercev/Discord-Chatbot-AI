@@ -44,12 +44,27 @@ async def send_message(message: Message, user_message: str, deleted: bool=False)
         if '>>snipe' in user_message.lower():
             response: str = recentlyDeleted # new version of deleted only works when '>>Snipe' is mentioned
             # {old version} --> response: str = get_response(user_message, deleted=True)
-        elif '>>getresult' in user_message.lower():
+        elif '>>getresult' in user_message.lower() or '>>dump' in user_message.lower():
             response: str = get_response(user_message, deleted=False, allMessages=allMessages)
+        elif '>>purge' in user_message.lower(): # purging messages
+            num = 2
+            print("made it in the purge if block")
+            try:
+                num = int(user_message[user_message.index('e')+1:])
+            except Exception as e:
+                print(e)
+
+            guild = client.get_guild(message.guild.id)
+            channel = guild.get_channel(message.channel.id)
+
+            deleted = await channel.purge(limit=num)
+            await channel.send(f'Deleted {len(deleted)} message(s)')
+            return
         else:
             response: str = get_response(user_message)
+        if not response:
+            return
         await message.author.send(response) if is_private else await message.channel.send(response)
-        await asyncio.sleep(5)
         
         ''' if a question is asked to the chatbot, sleep for 5 seconds to ensure the AI model isn't overloaded because of server requests 
         as it is hosted on the Hugging Face Inference API
@@ -77,15 +92,15 @@ async def on_message(message: Message) -> None:
     channel: str = str(message.channel)
 
     # adding the message to number of messages read
-    addToAllMsgDictionary(username, user_message, channel)
+    addToAllMsgDictionary(message, username, user_message, channel)
 
     print(f'[{channel}] {username}: {user_message}')
     await send_message(message, user_message)
 
 # adds message to the dictionary
-def addToAllMsgDictionary(username: str, user_message: str, channel:str) -> None:
+def addToAllMsgDictionary(message: Message, username: str, user_message: str, channel:str) -> None:
         global allMessages
-        allMessages[username].add(f"||{username} in channel #{channel} sent this message: {user_message}||")
+        allMessages[message.author.mention +"/" + username].add(f"||\"{user_message.lower()}\"||")
 
 
 # Detects deleted messages
@@ -94,7 +109,6 @@ async def on_message_delete(message: Message) -> None:
     if message.author == client.user:
         return
 
-    username: str = str(message.author)
     user_message: str = message.content
     channel: str = str(message.channel)
 
@@ -118,25 +132,32 @@ async def on_read(message: Message) ->None:
 async def on_ready():
     print("BOT IS NOW LIVE!")
     # Ensure the bot is ready before accessing the guild
-    guild = client.get_guild(1276709072535552000)
+    guild = client.get_guild()
+    print(client.guilds)
     
     if guild is None:
-        print("Could not find guild with ID 1276709072535552000")
+        print("Could not find guild with ID 1235744431483654144")
         return
 
-    channel = guild.get_channel(1276709073160634391)
+    channel = guild.get_channel()
     
     if channel is None:
-        print("Could not find channel with ID 1276709073160634391")
+        print("Could not find channel with ID 1235744431483654147")
         return
     
-    await channel.send("BOT IS NOW LIVE!")
+    await channel.send("**BOT IS NOW LIVE!**\nCommands:\nRoll dice === generates a random number between 1-6" + 
+                       "\n>>[question]? === asks a question to Llama AI. Include [###] in query to get a ### character length response"+
+                       "\n>>getResult [question]? === answers a question based off of chat history")
 
 
 # Main entry point
 def main() -> None:
     client.run(token=TOKEN)
 
+#lambda
+def lambda_handler(event, context):
+    client.run(TOKEN)
 
 if __name__ == '__main__':
     main()
+
