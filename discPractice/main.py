@@ -4,9 +4,10 @@ from dotenv import load_dotenv
 from discord import Intents, Client, Message
 from responses import get_response
 import certifi
-import asyncio
 from collections import defaultdict
 from discord.ext import commands
+import json
+from create_and_change_db import add_to_db
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
@@ -44,11 +45,8 @@ async def send_message(message: Message, user_message: str, deleted: bool=False)
         if '>>snipe' in user_message.lower():
             response: str = recentlyDeleted # new version of deleted only works when '>>Snipe' is mentioned
             # {old version} --> response: str = get_response(user_message, deleted=True)
-        elif '>>getresult' in user_message.lower() or '>>dump' in user_message.lower():
-            response: str = get_response(user_message, deleted=False, allMessages=allMessages)
         elif '>>purge' in user_message.lower(): # purging messages
             num = 2
-            print("made it in the purge if block")
             try:
                 num = int(user_message[user_message.index('e')+1:])
             except Exception as e:
@@ -91,8 +89,10 @@ async def on_message(message: Message) -> None:
     user_message: str = message.content
     channel: str = str(message.channel)
 
-    # adding the message to number of messages read
-    addToAllMsgDictionary(message, username, user_message, channel)
+    # adding message to db
+    if ">>query" not in user_message.lower():
+        add_to_db(user_message, {"source": message.author.mention}, message.id)
+
 
     print(f'[{channel}] {username}: {user_message}')
     await send_message(message, user_message)
@@ -132,14 +132,14 @@ async def on_read(message: Message) ->None:
 async def on_ready():
     print("BOT IS NOW LIVE!")
     # Ensure the bot is ready before accessing the guild
-    guild = client.get_guild()
-    print(client.guilds)
+    guild = client.get_guild(1276709072535552000)
+    #print(client.guilds)
     
     if guild is None:
         print("Could not find guild with ID 1235744431483654144")
         return
 
-    channel = guild.get_channel()
+    channel = guild.get_channel(1276709073160634391)
     
     if channel is None:
         print("Could not find channel with ID 1235744431483654147")
@@ -156,6 +156,7 @@ def main() -> None:
 
 #lambda
 def lambda_handler(event, context):
+    print(event)
     client.run(TOKEN)
 
 if __name__ == '__main__':
