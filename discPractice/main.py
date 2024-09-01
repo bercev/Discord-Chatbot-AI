@@ -15,6 +15,8 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 # Load our token from somewhere safe
 load_dotenv()
 TOKEN: Final[str] = os.getenv('DISCORD_TOKEN')
+banned_words = os.getenv('banned_words')
+banned_words = banned_words.split(',')
 
 # Bot Setup
 intents: Intents = Intents.default()
@@ -23,9 +25,6 @@ client: Client = commands.Bot(command_prefix=[">>"], intents=intents)
 
 # deleted message holder
 recentlyDeleted = "No messages have been recently deleted"
-
-# holds all messages
-allMessages = defaultdict(set)
 
 # Flag to control message processing
 processing_messages = True
@@ -77,6 +76,7 @@ async def send_message(message: Message, user_message: str, deleted: bool=False)
             '''
     except Exception as e:
         print(e)
+        print("line82")
 
 
 # Handling incoming messages
@@ -89,18 +89,21 @@ async def on_message(message: Message) -> None:
     user_message: str = message.content
     channel: str = str(message.channel)
 
-    # adding message to db
-    if ">>query" not in user_message.lower():
-        add_to_db(user_message, {"source": message.author.mention}, message.id)
+    u_msg = user_message.lower()
+
+    # cleaning up the message 
+    for i in banned_words:
+        if i in u_msg:
+            idx = u_msg.index(i)
+            u_msg = u_msg[0:idx+1] + "#"*(len(i)-1) + u_msg[len(i) + idx:]
+
+    # adding message to db if it is not a command
+    if ">>" not in u_msg:
+        add_to_db(u_msg, {"source": message.author.mention}, message.id)
 
 
-    print(f'[{channel}] {username}: {user_message}')
+    print(f'[{channel}] {username}: {u_msg}')
     await send_message(message, user_message)
-
-# adds message to the dictionary
-def addToAllMsgDictionary(message: Message, username: str, user_message: str, channel:str) -> None:
-        global allMessages
-        allMessages[message.author.mention +"/" + username].add(f"||\"{user_message.lower()}\"||")
 
 
 # Detects deleted messages
@@ -132,22 +135,19 @@ async def on_read(message: Message) ->None:
 async def on_ready():
     print("BOT IS NOW LIVE!")
     # Ensure the bot is ready before accessing the guild
-    guild = client.get_guild(1276709072535552000)
-    #print(client.guilds)
-    
-    if guild is None:
-        print("Could not find guild with ID 1235744431483654144")
-        return
+    guildList = []
+    for guild in client.guilds:
+        for channel in guild.channels:
+            if channel.name == 'general' and ("Text Channels" == str(channel.category)):
+                guildList.append((guild.id,channel.id))
 
-    channel = guild.get_channel(1276709073160634391)
-    
-    if channel is None:
-        print("Could not find channel with ID 1235744431483654147")
-        return
-    
-    await channel.send("**BOT IS NOW LIVE!**\nCommands:\nRoll dice === generates a random number between 1-6" + 
-                       "\n>>[question]? === asks a question to Llama AI. Include [###] in query to get a ### character length response"+
-                       "\n>>getResult [question]? === answers a question based off of chat history")
+
+    for group in guildList:
+        guild = client.get_guild(group[0])
+        channel = guild.get_channel(group[1])
+        await channel.send("```\n**BOT IS NOW LIVE!**\nCommands:\nRoll dice === generates a random number between 1-6" + 
+                    "\n>>[question]? === asks a question to Llama AI. Include [###] in query to get a ### character length response"+
+                    "\n>>query [question]? === answers a question based off of chat history\n```")
 
 
 # Main entry point
