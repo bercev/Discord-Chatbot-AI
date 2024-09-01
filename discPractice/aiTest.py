@@ -43,11 +43,10 @@ def ask_chatAI(message):
     token=HUGGINGFACEHUB_API_TOKEN,
     )
     answer =""
-    for message in client.chat_completion(messages=[{"role": "user", "content": message}], max_tokens=500,stream=True): 
+    for message in client.chat_completion(messages=[{"role": "user", "content": message}], max_tokens=250,stream=True): 
         answer+=message.choices[0].delta.content
     return answer
 
 
-
-
-      
+st = "hellothisisworld"
+print(st.index("this"))
