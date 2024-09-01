@@ -2,6 +2,7 @@ from langchain_community.embeddings import GPT4AllEmbeddings
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from uuid import uuid4
+import shutil
 from dotenv import load_dotenv
 
 
@@ -11,8 +12,7 @@ CHROMA_PATH = "vector_db"
 
 # main
 def main() -> None:
-    print("hello")
-    dump_db_to_terminal()
+    print("create_and_change_db.py")
 
 # dump to see contents of database
 def dump_db_to_terminal() -> None:
@@ -23,7 +23,6 @@ def dump_db_to_terminal() -> None:
     all_metadatas = db.get().get('metadatas')
     for i in range(len(all_messages)):
         print(all_metadatas[i].get('source') + " said: " + all_messages[i])
-        
 
 # adding each message to the db
 def add_to_db(texts, metadata, id) -> None:
@@ -44,6 +43,10 @@ def add_to_db(texts, metadata, id) -> None:
 # creating an empty db
 def create_empty_db() -> None:
     db = Chroma(collection_name="chroma-vector-db", embedding_function=GPT4AllEmbeddings, persist_directory=CHROMA_PATH)
+
+# delete the db 
+def delete_db() -> None:
+    shutil.rmtree('vector_db')
 
 # calling main()
 if __name__=="__main__":
