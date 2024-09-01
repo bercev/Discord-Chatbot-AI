@@ -18,7 +18,7 @@ CHROMA_PATH = "vector_db"
 warnings.filterwarnings("ignore", category=UserWarning)
 # prompt template
 PROMPT_TEMPLATE = """
-Answer the question based only on the following context which is given in a specific format of [Source] = is the person who sent the message, and [Message] = is the message from the Source
+Answer the question based only on the following context:
 
 {context}
 
@@ -62,7 +62,7 @@ def query(msg) -> str:
     # formatting context text and response text ahead of time:
     page_contents = []
     for doc, _score in results:
-        page_contents.append("Source: " + doc.metadata.get('source') + "\t\tMessage: " + doc.page_content)
+        page_contents.append("Sender/user/source/messager: " + doc.metadata.get('source') + "\t\tMessage: " + doc.page_content)
     context_text = "\n---\n".join(page_contents)
     response_text = ""
     
@@ -85,10 +85,11 @@ def query(msg) -> str:
 
     # getting and returning the response from the LLM with the source
     response_text = llm.invoke(prompt)
-    sources = [doc.metadata.get("source", None) for doc, _score in results] # getting sources from db
+
     if isinstance(response_text, AIMessage):
         response_text = response_text.content
-    formatted_response = f"Response: {response_text}\nSources:\n{sources}"
+    #sources = [doc.metadata.get("source", None) for doc, _score in results] # getting sources from db
+    formatted_response = f"Response: {response_text}" #\nSources:\n{sources}"
     print(formatted_response)
     return formatted_response
 
@@ -101,7 +102,6 @@ def determine_validity_of_context(query_text, context_text):
 
 def main() -> None:
     print("anaylze_db.py")
-    query("which color of people does <@771824555923996722>  hate?")
 
 if __name__ == "__main__":
     main()
